@@ -20,7 +20,7 @@ use Data::Dumper;
 use AnyEvent;
 use Carp;
 
-our $VERSION = 0.06;
+our $VERSION = 0.07;
 
 my $PID;
 
@@ -148,7 +148,6 @@ sub init {
     }
     
     if ($self->{check}) {
-        print "Starting check\n";
         my $guard; $guard = AnyEvent->timer (
             after       =>  $self->{check}->{interval},
             interval    =>  $self->{check}->{interval},
