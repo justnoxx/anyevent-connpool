@@ -20,7 +20,7 @@ use Data::Dumper;
 use AnyEvent;
 use Carp;
 
-our $VERSION = 0.05;
+our $VERSION = 0.06;
 
 my $PID;
 
@@ -41,7 +41,7 @@ Returns new pool object
             cb          =>  sub {
                 my $connection = shift;
                 ...
-                if ($connection->ping()) {
+                if ($connection->conn()->ping()) {
                     return 1;
                 }
                 return 0;
@@ -56,7 +56,12 @@ Returns new pool object
 constructor => subroutine, which generates connection for pool.
 
 check => pingers, allows to specify methods and interval for connection state validation.
-If false, pool will try to reopen connection.
+check->{cb} => callback, used for ping connection. You should implement this logic by yourself.
+If you need reconnect, you can just call
+
+    $connection->reconnect();
+
+check->{interval} => interval for the callback.
 
 size => how many connections should be created on pool initialization.
 

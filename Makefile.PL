@@ -52,5 +52,19 @@ unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
   }
 }
 
+# if so, ExtUtils::MakeMaker supports META_MERGE tag
+if ($ExtUtils::MakeMaker::VERSION >= 6.46) {
+    $WriteMakefileArgs{META_MERGE} = {
+        "meta-spec" => { version => 2 },
+        resources => {
+            repository => {
+                type    => 'git',
+                web     => 'https://github.com/justnoxx/anyevent-connpool',
+                url     => 'https://github.com/justnoxx/anyevent-connpool.git',
+            },
+        },
+    };
+}
+
 delete $WriteMakefileArgs{CONFIGURE_REQUIRES} unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
 WriteMakefile(%WriteMakefileArgs);
