@@ -53,13 +53,14 @@ Returns new pool object
     );
 
 
-B<constructor> subroutine, which generates connection for pool.
+constructor => subroutine, which generates connection for pool.
 
-B<check> pingers, allows to specify methods and interval for connection state validation. If false, pool will try to reopen connection.
+check => pingers, allows to specify methods and interval for connection state validation.
+If false, pool will try to reopen connection.
 
-B<size> how many connections should be created on pool initialization.
+size => how many connections should be created on pool initialization.
 
-B<init> initialize connections on pool construction.
+init => initialize connections on pool construction.
 
 =cut
 
@@ -119,7 +120,9 @@ sub new {
 
 
 =item B<init>
+
 Initializes pool.
+
 =cut
 
 sub init {
@@ -157,15 +160,31 @@ sub init {
 }
 
 
+=item B<add>
+
+Adds connection to the pool.
+
+=cut
+
 sub add {
     my ($self, $count) = @_;
     
+    # TODO: add count support
     my $conn = $self->{constructor}->();
     my $unit = AnyEvent::ConnPool::Unit->new($conn);
     $self->_add_object_raw($unit);
 
 }
 
+
+=item B<get>
+
+Returns AnyEvent::ConnPool::Unit object from the pool.
+
+    my $unit = $pool->get();
+    my $connection = $unit->conn();
+
+=cut
 
 sub get {
     my ($self, $index) = @_;
@@ -197,6 +216,9 @@ sub get {
         return $retval;
     }
 }
+
+
+# utility functions
 
 sub get_free_connection {
     my ($self, $desired_index) = @_;
@@ -253,9 +275,23 @@ sub _add_object_raw {
 1;
 
 package AnyEvent::ConnPool::Unit;
+=head1 NAME
+
+AnyEvent::ConnPool::Unit
+
+=head1 DESCRIPTION
+
+Connection unit. Just wrapper around user-specified connection.
+Required for transactions support.
+
+=head1 METHODS
+
+=over
+
+=cut
+
 use strict;
 use warnings;
-
 
 sub new {
     my ($class, $object) = @_;
@@ -269,12 +305,26 @@ sub new {
     return $unit;
 }
 
+=item B<conn>
+
+Returns connection from unit object.
+
+=cut
 
 sub conn {
     my $self = shift;
     return $self->{_conn};
 }
 
+
+=item B<lock>
+
+Locks current connection. After that connection shouldn't be used in balancing mechanism and never will be
+returned from pool. To unlock connection you should use unlock method.
+
+    $connection->lock();
+
+=cut
 
 sub lock {
     my ($self) = @_;
@@ -284,6 +334,14 @@ sub lock {
 }
 
 
+=item B<unlock>
+
+Unlocks connection and returns it to the balancing scheme. 
+
+    $connection->unlock();
+
+=cut
+
 sub unlock {
     my ($self) = @_;
 
@@ -292,11 +350,24 @@ sub unlock {
 }
 
 
+=item B<locked>
+
+Returns true if connection is locked.
+
+    if ($connection->locked()) {
+        ...
+    }
+
+=cut
+
 sub locked {
     my ($self) = @_;
     
     return $self->{_locked};
 }
+
+=back
+=cut
 
 1;
 
