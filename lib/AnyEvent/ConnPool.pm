@@ -20,7 +20,7 @@ use Data::Dumper;
 use AnyEvent;
 use Carp;
 
-our $VERSION = 0.03;
+our $VERSION = 0.05;
 
 my $PID;
 
@@ -143,13 +143,20 @@ sub init {
     }
     
     if ($self->{check}) {
+        print "Starting check\n";
         my $guard; $guard = AnyEvent->timer (
             after       =>  $self->{check}->{interval},
             interval    =>  $self->{check}->{interval},
             cb          =>  sub {
+                my $temp_guard = $guard;
                 for (my $i = 0; $i < $self->{count}; $i++) {
                     my $conn = $self->{_payload}->[$i];
-                    $self->{check}->{cb}->($conn);
+                    eval {
+                        $self->{check}->{cb}->($conn);
+                        1;
+                    } or do {
+                        carp "Error occured: $@";
+                    };
                 }
             },
         );
@@ -171,9 +178,12 @@ sub add {
     
     # TODO: add count support
     my $conn = $self->{constructor}->();
-    my $unit = AnyEvent::ConnPool::Unit->new($conn);
-    $self->_add_object_raw($unit);
+    my $unit = AnyEvent::ConnPool::Unit->new($conn,
+        index       =>  $self->{count},
+        constructor =>  $self->{constructor},
+    );
 
+    $self->_add_object_raw($unit);
 }
 
 
@@ -215,6 +225,28 @@ sub get {
         $self->{index}++;
         return $retval;
     }
+}
+
+
+sub grow {
+    my ($self, $count) = @_;
+
+    $count ||= 1;
+    for (1 .. $count) {
+        $self->add();
+    }
+    return 1;
+}
+
+
+sub shrink {
+    my ($self, $count) = @_;
+
+    $count ||= 1;
+    for (1 .. $count) {
+        pop @{$self->{_payload}};
+    }
+    return 1;
 }
 
 
@@ -294,11 +326,15 @@ use strict;
 use warnings;
 
 sub new {
-    my ($class, $object) = @_;
+    my ($class, $object, %opts) = @_;
+
+    my ($index, $constructor) = ($opts{index}, $opts{constructor});
 
     my $unit = {
-        _conn   =>  $object,
-        _locked  =>  0,
+        _conn           =>  $object,
+        _locked         =>  0,
+        _index          =>  $index,
+        _constructor    =>  $constructor,
     };
 
     bless $unit, $class;
@@ -366,6 +402,21 @@ sub locked {
     return $self->{_locked};
 }
 
+
+sub index {
+    my ($self) = @_;
+    return $self->{_index};
+}
+
+
+sub reconnect {
+    my ($self) = @_;
+
+    if ($self->{_constructor}) {
+        $self->{_conn} = $self->{_constructor}->();
+    }
+    return 1;
+}
 =back
 =cut
 

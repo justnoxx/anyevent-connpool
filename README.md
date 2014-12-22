@@ -12,7 +12,7 @@ Connection pool designed for asynchronous connections.
             create_connection();
         },
         check       =>  {
-            sub         =>  sub {
+            cb          =>  sub {
                 my $conn = shift;
                 if ($conn->ping()) {
                     return 1;
@@ -40,5 +40,3 @@ Connection pool designed for asynchronous connections.
     # unlocks connection, after that it will be returned to balance scheme.
 
     $unit->unlock();
-
-
