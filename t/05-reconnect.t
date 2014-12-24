@@ -1,4 +1,3 @@
-#!/usr/bin/env perl
 use strict;
 use warnings;
 use Test::More tests => 1;
@@ -17,3 +16,4 @@ my $unit = $connpool->get();
 my $value = $unit->conn()->{value};
 $unit->reconnect();
 ok ($unit->conn()->{value} > $value, "Reconnecting");
+

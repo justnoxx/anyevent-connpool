@@ -1,3 +1,6 @@
+0.07 - 24.12.2014
+    Removed shebangs from tests.
+
 0.06 - 22.12.2014
     Updated pod, added github links.
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env perl
 use strict;
 use warnings;
 use AnyEvent;
@@ -37,3 +36,4 @@ $cv->recv();
 my $done = 1;
 ok ($done, 'Successfully checked');
 done_testing();
+

@@ -20,7 +20,7 @@ use Data::Dumper;
 use AnyEvent;
 use Carp;
 
-our $VERSION = 0.06;
+our $VERSION = 0.07;
 
 my $PID;
 
