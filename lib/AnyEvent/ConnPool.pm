@@ -16,11 +16,10 @@ package AnyEvent::ConnPool;
 use strict;
 use warnings;
 
-use Data::Dumper;
 use AnyEvent;
 use Carp;
 
-our $VERSION = 0.08;
+our $VERSION = 0.09;
 
 my $PID;
 

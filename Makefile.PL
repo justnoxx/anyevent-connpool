@@ -5,24 +5,31 @@ use 5.008001;
 use ExtUtils::MakeMaker 6.30;
 
 my %WriteMakefileArgs = (
-    "ABSTRACT" => "Connection pool based on AnyEvent",
-    "AUTHOR" => 'justnoxx',
-    "BUILD_REQUIRES" => {},
-    "CONFIGURE_REQUIRES" => {
-        "ExtUtils::MakeMaker" => "6.30",
+    ABSTRACT            => "Connection pool based on AnyEvent",
+    AUTHOR              => 'justnoxx',
+    CONFIGURE_REQUIRES  => {
+        'AnyEvent'            =>    7.07,
+        'ExtUtils::MakeMaker' =>    6.30,
     },
-    "DISTNAME" => "AnyEvent-ConnPool",
-    "LICENSE" => "perl",
-    "NAME" => "AnyEvent::ConnPool",
-    "PREREQ_PM" => {
-        "POSIX" =>  0,
-        "Carp"  =>  0
+    BUILD_REQUIRES      => {
+        'AnyEvent'            =>    7.07,
+        'ExtUtils::MakeMaker' =>    6.30,
+    },  
+    PREREQ_PM           => {
+        'AnyEvent'            =>    7.07,
+        "ExtUtils::MakeMaker" =>    6.30,
     },
-    "VERSION_FROM" => "lib/AnyEvent/ConnPool.pm",
-    "test" => {
+    TEST_REQUIRES       => {
+        'AnyEvent'            =>    7.07,
+        'ExtUtils::MakeMaker' =>    6.30,
+    },
+    DISTNAME            => "AnyEvent-ConnPool",
+    LICENSE             => "perl",
+    NAME                => "AnyEvent::ConnPool",
+    VERSION_FROM        => "lib/AnyEvent/ConnPool.pm",
+    test                => {
         "TESTS" => "t/*.t"
     }
-
 );
 
 
