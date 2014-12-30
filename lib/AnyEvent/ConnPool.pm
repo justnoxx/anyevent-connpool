@@ -19,7 +19,7 @@ use warnings;
 use AnyEvent;
 use Carp;
 
-our $VERSION = 0.09;
+our $VERSION = 0.11;
 
 my $PID;
 
@@ -66,6 +66,16 @@ size => how many connections should be created on pool initialization.
 
 init => initialize connections on pool construction.
 
+dispatcher => returns dispatcher object instead of pool object. You can use dispatcher as wrapper around your connection. In that case pool will use 
+all it's features behind the scene. You can get dispatcher not only from constructor, you can get it from pool with dispatcher method. For example:
+    
+    # with your connection
+    $connection->selectall_arrayref(...);
+
+    # pooled
+    my $dispatcher = $connpool->dispatcher();
+    # same thing as selectall_arrayref above, but with connpool behind the scene.
+    $dispatcher->selectall_arrayref(...);
 =cut
 
 sub new {
@@ -82,10 +92,15 @@ sub new {
     if (!$opts{constructor}) {
         croak "Missing mandatory param constructor.";
     }
+
     if (ref $opts{constructor} ne 'CODE') {
         croak "Constructor should be a code reference.";
     }
-    
+
+    if ($opts{dispatcher} && !$opts{init}) {
+        croak "Can't get dispatcher on uninitialized pool";
+    }
+
     $self->{constructor} = $opts{constructor};
 
     if ($opts{check}) {
@@ -118,7 +133,10 @@ sub new {
     if ($opts{init}) {
         $self->init();
     }
-
+    
+    if ($opts{dispatcher}) {
+        return $self->dispatcher();
+    }   
     return $self;
 }
 
@@ -167,6 +185,30 @@ sub init {
 
     $self->{init} = 1;
     return 1;
+}
+
+
+=item B<dispatcher>
+
+Returns dispatcher object instead of pool object. It allows you to call connection's method directly, if you don't care about pool mechanism.
+And it's simple.
+
+    my $dispatcher = $connpool->dispatcher();
+    $dispatcher->selectall_arrayref(...);
+    # equivalent to:
+    $connpool->get()->conn()->selectall_arrayref(...);
+
+=cut
+
+sub dispatcher {
+    my ($self) = @_;
+
+    my $dispatcher = {
+        _pool   =>  $self,
+    };
+
+    bless $dispatcher, 'AnyEvent::ConnPool::Dispatcher';
+    return $dispatcher;
 }
 
 
@@ -309,6 +351,30 @@ sub _add_object_raw {
 
 1;
 
+package AnyEvent::ConnPool::Dispatcher;
+use strict;
+no strict qw/refs/;
+use warnings;
+use Data::Dumper;
+use Carp;
+
+our $AUTOLOAD;
+sub AUTOLOAD {
+    my ($d, @params) = @_;
+
+    my $program = $AUTOLOAD;
+    $program =~ s/.*:://;
+    
+    my $conn = $d->{_pool}->get()->conn();
+    my $reference = sprintf("%s::%s", ref ($conn), $program);
+    
+    $_[0] = $conn;
+
+    goto &{$reference};
+}
+
+1;
+
 package AnyEvent::ConnPool::Unit;
 =head1 NAME
 
@@ -343,6 +409,7 @@ sub new {
     bless $unit, $class;
     return $unit;
 }
+
 
 =item B<conn>
 
