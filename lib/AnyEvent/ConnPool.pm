@@ -19,7 +19,7 @@ use warnings;
 use AnyEvent;
 use Carp;
 
-our $VERSION = 0.11;
+our $VERSION = 0.12;
 
 my $PID;
 
@@ -76,6 +76,10 @@ all it's features behind the scene. You can get dispatcher not only from constru
     my $dispatcher = $connpool->dispatcher();
     # same thing as selectall_arrayref above, but with connpool behind the scene.
     $dispatcher->selectall_arrayref(...);
+    # you can always get connpool from dispatcher:
+    my $pool = AnyEvent::ConnPool->pool_from_dispatcher($dispatcher);
+
+
 =cut
 
 sub new {
@@ -209,6 +213,43 @@ sub dispatcher {
 
     bless $dispatcher, 'AnyEvent::ConnPool::Dispatcher';
     return $dispatcher;
+}
+
+
+=item B<pool_from_dispatcher>
+
+Returns pool object from dispatcher object. You can call it by 3 ways:
+
+    my $pool = AnyEvent::ConnPool::pool_from_dispatcher($dispatcher);
+    my $pool = AnyEvent::ConnPool->pool_from_dispatcher($dispatcher);
+    my $pool = $connpool->pool_from_dispatcher($dispatcher);
+
+=cut
+
+sub pool_from_dispatcher {
+    my ($p1, $p2) = @_;
+    my $dispatcher = undef;
+
+    if ($p1) {
+        # $p1 is just string, called as AnyEvent::ConnPool->dispatcher_from_pool($dispatcher)
+        # so, dispatcher is in $p2
+        if (!ref $p1) {
+            $dispatcher = $p2;
+        }
+        elsif (ref $p1 eq __PACKAGE__) {
+            $dispatcher = $p2;
+        }
+        else {
+            $dispatcher = $p1;
+        }
+    }
+
+    $dispatcher ||= $p2;
+    if (!$dispatcher || ref $dispatcher ne 'AnyEvent::ConnPool::Dispatcher') {
+        croak "No dispatcher";
+    }
+    
+    return $dispatcher->{_pool};
 }
 
 
@@ -355,7 +396,6 @@ package AnyEvent::ConnPool::Dispatcher;
 use strict;
 no strict qw/refs/;
 use warnings;
-use Data::Dumper;
 use Carp;
 
 our $AUTOLOAD;
@@ -368,7 +408,7 @@ sub AUTOLOAD {
     my $conn = $d->{_pool}->get()->conn();
     my $reference = sprintf("%s::%s", ref ($conn), $program);
     
-    $_[0] = $conn;
+    local $_[0] = $conn;
 
     goto &{$reference};
 }
