@@ -3,7 +3,7 @@ use warnings;
 use AnyEvent::ConnPool;
 use Data::Dumper;
 
-use Test::More tests => 6;
+use Test::More tests => 7;
 
 my $global_counter = 1;
 my $connpool = AnyEvent::ConnPool->new(
@@ -17,11 +17,12 @@ my $connpool = AnyEvent::ConnPool->new(
 
 my $d = $connpool->dispatcher();
 
-print "Before die: ", Dumper $d;
 my $result = $d->foo("Test");
 
-print "After die: ", Dumper $d;
 is ($result, 'Test', 'Dispatcher ok');
+
+$d->foo('One more test');
+is (ref $d, 'AnyEvent::ConnPool::Dispatcher', 'After AUTOLOAD call');
 eval {
     $d->undefined_sub();
 };
@@ -55,10 +56,8 @@ ok($@, "Fail on pool_from_dispatcher with bad params");
 
 package Foo::Bar::Baz;
 use strict;
-use Data::Dumper;
 sub foo {
     my ($self, $param) = @_;
-    print Dumper \@_;
     return $param;
 }
 

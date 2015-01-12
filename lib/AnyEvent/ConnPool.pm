@@ -19,7 +19,7 @@ use warnings;
 use AnyEvent;
 use Carp;
 
-our $VERSION = 0.12;
+our $VERSION = 0.13;
 
 my $PID;
 
@@ -408,7 +408,8 @@ sub AUTOLOAD {
     my $conn = $d->{_pool}->get()->conn();
     my $reference = sprintf("%s::%s", ref ($conn), $program);
     
-    local $_[0] = $conn;
+    shift;
+    unshift @_, $conn;
 
     goto &{$reference};
 }
